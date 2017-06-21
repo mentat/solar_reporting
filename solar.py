@@ -24,8 +24,8 @@ class SolarMonitor(object):
     def read_charger(self):
         client = ModbusTcpClient(MIDNIGHT_ADDRESS)
         base = 4114
-        rq = client.read_holding_registers(base,40)
-        assert(rq.function_code < 0x80)
+        rq = client.read_holding_registers(base, 40)
+        assert rq.function_code < 0x80
 
         batt_v = rq.registers[4114-base]/10.0
         pv_v = rq.registers[4115-base]/10.0
@@ -35,8 +35,6 @@ class SolarMonitor(object):
         inv_system_temp = rq.registers[4131-base]/10.0
 
         return (batt_v, pv_v, in_kwh, in_watt, in_amp_hours, inv_system_temp)
-
-        #self.upload_status(KWH, WATT, TEMP, BATTV)
 
     def read_inverter(self):
         # The radian returns JSON, thankfully
@@ -68,8 +66,7 @@ class SolarMonitor(object):
         batt_v, pv_v, in_kwh, in_watt, in_amp_hours, inv_system_temp = self.read_charger()
         out_kwh, out_ah, out_watts = self.read_inverter()
 
-        dt = datetime.datetime.utcnow()
-        #ts = time.mktime(dt.timetuple())
+        dt = datetime.datetime.now()
 
         params = {
             'd':dt.strftime("%Y%m%d"), # date 20100830
@@ -83,7 +80,6 @@ class SolarMonitor(object):
         }
 
         print "Sending: %s" % params
-        return
 
         req = urllib2.Request(
             url='https://pvoutput.org/service/r2/addstatus.jsp',
