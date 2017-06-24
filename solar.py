@@ -3,6 +3,7 @@ import sys
 import json
 import urllib
 import urllib2
+import socket
 import datetime
 
 from pymodbus.client.sync import ModbusTcpClient
@@ -14,12 +15,17 @@ RADIAN_ADDRESS = "192.168.2.42"
 
 MIDNIGHT_ADDRESS = "192.168.2.46"
 
+UDP_PORT = 57027
+
 MIDNIGHT_REGISTERS = {
     "BATT_VOLTS": 4114,
     "PV_VOLTS": 4115,
 }
 
 class SolarMonitor(object):
+
+    def __init__(self):
+        super(SolarMonitor, self).__init__()
 
     def read_charger(self):
         client = ModbusTcpClient(MIDNIGHT_ADDRESS)
@@ -34,7 +40,7 @@ class SolarMonitor(object):
         in_amp_hours = rq.registers[4124-base]/10.0
         inv_system_temp = rq.registers[4131-base]/10.0
 
-        return (batt_v, pv_v, in_kwh, in_watt, in_amp_hours, inv_system_temp)
+        return (batt_v, batt_v, in_kwh, in_watt, in_amp_hours, inv_system_temp)
 
     def read_inverter(self):
         # The radian returns JSON, thankfully
@@ -60,11 +66,18 @@ class SolarMonitor(object):
 
         return (out_kwh, out_ah, out_watts)
 
+    def read_inverter_modbus(self):
+        # Read from an incoming UDP stream of data instead of the JSON
+        # API due to the limited data available.
+        import outback
+        client = ModbusTcpClient(RADIAN_ADDRESS)
+        return outback.read_outback_modbus(client)
+
 
     def upload_status(self):
 
         batt_v, pv_v, in_kwh, in_watt, in_amp_hours, inv_system_temp = self.read_charger()
-        out_kwh, out_ah, out_watts = self.read_inverter()
+        out_kwh, out_ah, out_watts = self.read_inverter_modbus()
 
         dt = datetime.datetime.now()
 
