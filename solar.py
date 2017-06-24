@@ -67,8 +67,9 @@ class SolarMonitor(object):
         return (out_kwh, out_ah, out_watts)
 
     def read_inverter_modbus(self):
-        # Read from an incoming UDP stream of data instead of the JSON
-        # API due to the limited data available.
+        # Read from Outback Mate3 Modbus (Sunspec), this data should
+        # really be in the JSON returned by the Mate3, but for some
+        # crazy reason it is not.
         import outback
         client = ModbusTcpClient(RADIAN_ADDRESS)
         return outback.read_outback_modbus(client)
